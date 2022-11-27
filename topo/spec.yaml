@@ -1,0 +1,42 @@
+nodes:
+- name: P4
+  image: sabaniki/frr:latest
+  docker_run_extra_args: -v `realpath $PWD/../P4`:/behavioral-model/src
+  interfaces:
+  - { name: vm1, type: direct, args: VM1#p4 }
+  - { name: vm2, type: direct, args: VM2#p4 }
+  - { name: vm3, type: direct, args: VM3#p4 }
+
+- name: VM1
+  image: sabaniki/frr:latest
+  interfaces:
+  - { name: p4, type: direct, args: P4#vm1 }
+
+- name: VM2
+  image: sabaniki/frr:latest
+  interfaces:
+  - { name: p4, type: direct, args: P4#vm2 }
+
+- name: VM3
+  image: sabaniki/frr:latest
+  interfaces:
+  - { name: p4, type: direct, args: P4#vm3 }
+
+node_configs:
+- name: VM1
+  cmds:
+  - cmd: ip link set down dev p4
+  - cmd: ip link set addr aa:aa:aa:aa:aa:aa dev p4
+  - cmd: ip addr add 192.168.100.10/24 dev p4
+
+- name: VM2
+  cmds:
+  - cmd: ip link set down dev p4
+  - cmd: ip link set addr bb:bb:bb:bb:bb:bb dev p4
+  - cmd: ip addr add 192.168.100.20/24 dev p4
+
+- name: VM1
+  cmds:
+  - cmd: ip link set down dev p4
+  - cmd: ip link set addr cc:cc:cc:cc:cc:cc dev p4
+  - cmd: ip addr add 192.168.100.30/24 dev p4
