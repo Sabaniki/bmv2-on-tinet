@@ -4,7 +4,7 @@ SHELL = /usr/bin/env bash -o pipefail
 P4_PROG_FILE := basic.p4
 
 .PHONY: all
-all: build
+all: p4-build bmv2-docker-build tinet-reset
 
 ##@ General
 
@@ -15,8 +15,12 @@ help: ## Display this help.
 ##@ Build
 
 .PHONY: p4-build
-p4-build: ## Build Docker image name "orf22/passive_rtt:latest".
-	docker run --rm -v $(CURDIR)/P4:/p4c p4lang/p4c p4c --target bmv2 --arch v1model $(P4_PROG_FILE)
+p4-build: ## Build P4 source code.
+	docker run --rm -v $(CURDIR)/P4:/p4c p4lang/p4c p4c --target bmv2 --arch v1model $(P4_PROG_FILE) --p4runtime-files p4info.txt
+
+.PHONY: bmv2-docker-build
+bmv2-docker-build: ## Build Docker image name "sabaniki/bmv2:latest".
+	cd bmv2 && docker build -t sabaniki/bmv2 .
 
 ##@ Dev
 
@@ -33,3 +37,23 @@ tinet-reset: tinet-down tinet-up ## Reset Virtual Env.
 
 .PHONY: update-image
 update-image: build tinet-reset ## Update image and reset virtual Env.
+
+##@ Run
+
+.PHONY: run
+run: ## run P4 switch
+	docker exec -it P4 simple_switch src/basic.json -i 1@vm1 -i 2@vm2 -i 3@vm3 --nanolog ipc:///tmp/bm-0-log.ipc --log-console -L debug --notifications-addr ipc:///tmp/bmv2-0-notifications.ipc
+
+.PHONY: set-config
+set-config: ## set runtime config to P4 switch
+	docker exec -it P4 bash -c "cat src/runtime.txt | bm_CLI"
+
+##@ Attach
+
+.PHONY: cli
+cli: ## attach bmv2 runtime cli
+	docker exec -it P4 bm_CLI
+
+.PHONY: events
+events: ## attach bmv2 nanomsg_events
+	docker exec -it P4 bm_nanomsg_events
