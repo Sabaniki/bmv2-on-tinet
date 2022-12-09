@@ -21,7 +21,7 @@ custom-image: ## Build Docker image named "sabaniki/bmv2:latest".
 	cd bmv2 && docker build -t sabaniki/bmv2 .
 
 .PHONY: env
-env: p4-build bmv2-docker-build tinet-reset  ## Create virtual network environment.
+env: p4-build custom-image tinet-reset  ## Create virtual network environment.
 
 ##@ Dev
 
